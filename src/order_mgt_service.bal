@@ -43,7 +43,40 @@ service orderMgt on httpListener {
 		path: "/order"
 	}
 	resource function addOrder(http:Caller caller, http:Request req) {
-		// Implementation of the function; How to handle a POST request.	
+		// Add the new order to ordersMap
+		http:Response res = new;
+		var orderReq = <@untainted> req.getJsonPayload();
+
+		// New order is appended to the ordersMap
+		if (orderReq is json) {
+			//string orderId = orderReq.Order.ID.toString();
+			var orderId = ordersMap.length().toString(); 
+			ordersMap[orderId] = orderReq;
+
+			// Create response message
+			json payload = { status: "Order Created", orderId: orderId};
+			res.setJsonPayload(<@untainted> payload);
+
+			// Set the status code to 201: Created
+			res.statusCode = 201;
+
+			// Set location header in the response message. This will contain the location of the newly created order.
+			res.setHeader("Location", "http://127.0.0.1:9090/ordermgt/order/" + orderId);
+
+			// Send response to the client
+			var result = caller -> respond(res);
+			if (result is error) {
+				log:printError("Error sending request", err = result);	
+			}
+		} else {
+			res.statusCode = 400;
+			res.setPayload("Invalid payload recieved");
+			
+			var result = caller -> respond(res);
+			if (result is error) {
+				log:printError("Error sending request", err = result);	
+			}
+		}
 	}
 
 	// The resource that handles PUT requests that will concentrate on a specific order to be updated using the path '/order/<orderID>'
