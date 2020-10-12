@@ -1,4 +1,5 @@
 import ballerina/http;
+import ballerina/log;
 
 // Instance of http:Listener; This will listen to reqeusts on port 9090.
 listener http:Listener httpListener = new(9090);
@@ -17,7 +18,23 @@ service orderMgt on httpListener {
 		path: "/order/{orderId}"
 	}
 	resource function findOrder(http:Caller caller, http:Request req, string orderId) {
-		// Implementation of the function; How to handle a GET request.
+		// Find the requested order, pull it out in JSON format.
+		json? payload = ordersMap[orderId];
+		http:Response res = new;
+		
+		// Checking whether the requested order exists
+		if(payload == null) {
+			payload = "Order: " + orderId + " cannot be found. ";	
+		}
+
+		// Setting the JSON payload as reseponse message
+		res.setJsonPayload(<@untainted> payload);
+
+		// Send response
+		var result = caller -> respond(res);
+		if (result is error) {
+			log:printError("Error sending response", err = result);
+		}
 	}
 
 	// The resource that handles POST requests that will use '/order' path to create a new order
