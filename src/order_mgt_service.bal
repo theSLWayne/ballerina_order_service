@@ -18,6 +18,7 @@ service orderMgt on httpListener {
 		path: "/order/{orderId}"
 	}
 	resource function findOrder(http:Caller caller, http:Request req, string orderId) {
+		// TODO: Modify to check whether there are any existing orders under the new orderId. If not, continue with the process.
 		// Find the requested order, pull it out in JSON format.
 		json? payload = ordersMap[orderId];
 		http:Response res = new;
@@ -136,6 +137,19 @@ service orderMgt on httpListener {
 		path: "/order/{orderId}"
 	}
 	resource function deleteOrder(http:Caller caller, http:Request req, string orderId) {
-		// Implementation of the function; How to handle a DELETE request.	
+		// Delete orders currently in the map.
+		http:Response res = new;
+		// Remove tje order from map object.
+		_ = ordersMap.remove(orderId);
+
+		// Set payload to be sent to the client.
+		json payload = "Order:" + orderId + " removed successfully. ";
+		res.setJsonPayload(<@untainted> payload);
+
+		// Send response to the client
+		var result = caller -> respond(res);
+		if (result is error) {
+			log:printError("Error sending response", err = result);	
+		}
 	}
 }
