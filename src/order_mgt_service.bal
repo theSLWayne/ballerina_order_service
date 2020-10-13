@@ -50,7 +50,7 @@ service orderMgt on httpListener {
 		// New order is appended to the ordersMap
 		if (orderReq is json) {
 			//string orderId = orderReq.Order.ID.toString();
-			var orderId = ordersMap.length().toString(); 
+			var orderId = orderReq.Order.ID.toString(); 
 			ordersMap[orderId] = orderReq;
 
 			// Create response message
@@ -85,7 +85,49 @@ service orderMgt on httpListener {
 		path: "/order/{orderId}"
 	}
 	resource function updateOrder(http:Caller caller, http:Request req, string orderId) {
-		// Implementation of the function; How to handle a PUT request.	
+		// Update orders currently in the map
+		http:Response res = new;
+		var updatedOrder = <@untained> req.getJsonPayload();
+		
+		if (updatedOrder is json) {
+
+			// The order is updated according to the request
+			json existingOrder = ordersMap[orderId];
+
+			if (existingOrder != null) {
+				existingOrder = updatedOrder;
+				ordersMap[orderId] = existingOrder;
+			} else {
+				existingOrder = "Order: " + orderId	+ " cannot be found. ";
+			}
+
+			//map<json> existingOrder = <map<json>> ordersMap[orderId];
+			//map<json> order = <map<json>> existingOrder.get("Order");
+			
+			//if (order.keys().length() != 0) {
+				//order["Name"] = <string> updatedOrder.Order.Name;
+				//order["Description"] = <string> updatedOrder.Order.Description;
+				//ordersMap[orderId] = existingOrder;
+			//} else {
+				//existingOrder = <json> "Order : " + orderId + " cannot be found.";	
+			//}
+			
+			// The payload to be sent to the client.
+			res.setJsonPayload(<@untained> existingOrder);
+
+			// Send response to client
+			var result = caller -> respond(res);
+			if (result is error) {
+				log:printError("Error sending response", err = result);	
+			}
+		} else {
+			res.statusCode = 400;
+			res.setPayload("Invalid payload recieved");
+			var result = caller -> respond(res);
+			if (result is error) {
+				log:printError("Error sending response", err = result);	
+			}
+		}
 	}
 
 	// Resource that handles DELETE requests that will mention a specific order to be deleted using the path 'order/<orderID>'
