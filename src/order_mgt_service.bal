@@ -11,6 +11,11 @@ map<json> ordersMap = {};
 @http:ServiceConfig { basePath: "/ordermgt"  }
 service orderMgt on httpListener {
 
+	@http:ResourceConfig {
+		methods: ["GET"],
+		path: "/orders/{orderId}"
+	}
+
 	// The resource that handles GET requests that mention a specific order using '/order/<orderID>'
 	// The resource function will take the caller, request and the order ID of the request as parameters.
 	@http:ResourceConfig {
@@ -51,19 +56,24 @@ service orderMgt on httpListener {
 		// New order is appended to the ordersMap
 		if (orderReq is json) {
 			//string orderId = orderReq.Order.ID.toString();
-			var orderId = orderReq.Order.ID.toString(); 
-			ordersMap[orderId] = orderReq;
+			var orderId = orderReq.Order.ID.toString();
 
-			// Create response message
-			json payload = { status: "Order Created", orderId: orderId};
-			res.setJsonPayload(<@untainted> payload);
+			if (ordersMap[orderId] == null) {
+				ordersMap[orderId] = orderReq;
 
-			// Set the status code to 201: Created
-			res.statusCode = 201;
+				// Create response message
+				json payload = { status: "Order Created", orderId: orderId};
+				res.setJsonPayload(<@untainted> payload);
 
-			// Set location header in the response message. This will contain the location of the newly created order.
-			res.setHeader("Location", "http://127.0.0.1:9090/ordermgt/order/" + orderId);
+				// Set the status code to 201: Created
+				res.statusCode = 201;
 
+				// Set location header in the response message. This will contain the location of the newly created order.
+				res.setHeader("Location", "http://127.0.0.1:9090/ordermgt/order/" + orderId);
+			} else {
+				json payload = { status: "Order not created. There is an existing order under that orderId.", orderId: orderId };
+				res.setJsonPayload(<@untainted> payload);
+			}
 			// Send response to the client
 			var result = caller -> respond(res);
 			if (result is error) {
