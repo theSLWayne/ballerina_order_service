@@ -13,7 +13,22 @@ service orderMgt on httpListener {
 
 	@http:ResourceConfig {
 		methods: ["GET"],
-		path: "/orders/{orderId}"
+		path: "/orders"
+	}
+	resource function showOrders(http:Caller caller, http:Request req) {
+		// Return the list of orders
+		http:Response res = new;
+		
+		json? payload = ordersMap; 
+
+		res.setJsonPayload(<@untainted> payload);
+		
+		// Send response
+		var result = caller -> respond(res);
+		if (result is error) {
+			log:printError("Error sending response", err = result);
+		}
+
 	}
 
 	// The resource that handles GET requests that mention a specific order using '/order/<orderID>'
@@ -23,7 +38,6 @@ service orderMgt on httpListener {
 		path: "/order/{orderId}"
 	}
 	resource function findOrder(http:Caller caller, http:Request req, string orderId) {
-		// TODO: Modify to check whether there are any existing orders under the new orderId. If not, continue with the process.
 		// Find the requested order, pull it out in JSON format.
 		json? payload = ordersMap[orderId];
 		http:Response res = new;
