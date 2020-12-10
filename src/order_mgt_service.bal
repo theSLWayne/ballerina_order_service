@@ -1,5 +1,24 @@
 import ballerina/http;
 import ballerina/log;
+import ballerina/mongodb;
+
+// Mongo ClientConfig
+mongodb:ClientConfig mongoConfig = {
+	host: "localhost",
+	port: 27017,
+	username: "admin",
+	password: "admin",
+	options: {sslEnabled: false, serverSelectionTimeout: 5000}
+};
+
+// Instance of Mongo Client
+mongodb:Client mongoClient = checkpanic new (mongoConfig);
+
+// Select database
+mongodb:Database mongoDatabase = checkpanic mongoClient -> getDatabase("orderdb");
+
+// Select Collection
+mongodb:Collection mongoCollection = checkpanic mongoDatabase -> getCollection("ordercollection");
 
 // Instance of http:Listener; This will listen to reqeusts on port 9090.
 listener http:Listener httpListener = new(9090);
@@ -18,8 +37,16 @@ service orderMgt on httpListener {
 	resource function showOrders(http:Caller caller, http:Request req) {
 		// Return the list of orders
 		http:Response res = new;
+
+		map<json> allOrdersMap = {};
 		
-		json? payload = ordersMap; 
+		foreach json order in ordersMap{
+			var orderID = order.Order.ID.toString();
+			var orderName = order.Order.Name.toString();
+			json orderItem = {"ID": orderID, "Name": orderName};
+			allOrdersMap[orderID] = orderItem;
+		}
+		json? payload = allOrdersMap; 
 
 		res.setJsonPayload(<@untainted> payload);
 		
