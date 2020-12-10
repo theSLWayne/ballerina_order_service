@@ -29,7 +29,9 @@ map<json> ordersMap = {};
 // RESTful service. The path of this service would be '/ordermgt'
 @http:ServiceConfig { basePath: "/ordermgt"  }
 service orderMgt on httpListener {
-
+	
+	// The resource that handles GET requests that requires basic details of all orders using '/orders'
+	// The function will take the caller and the request as parameters.
 	@http:ResourceConfig {
 		methods: ["GET"],
 		path: "/orders"
