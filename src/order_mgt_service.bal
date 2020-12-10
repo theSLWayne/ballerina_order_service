@@ -36,9 +36,17 @@ service orderMgt on httpListener {
 	}
 	resource function showOrders(http:Caller caller, http:Request req) {
 		// Return the list of orders
-http:Response res = new;
+		http:Response res = new;
+
+		map<json> allOrdersMap = {};
 		
-		json? payload = ordersMap; 
+		foreach json order in ordersMap{
+			var orderID = order.Order.ID.toString();
+			var orderName = order.Order.Name.toString();
+			json orderItem = {"ID": orderID, "Name": orderName};
+			allOrdersMap[orderID] = orderItem;
+		}
+		json? payload = allOrdersMap; 
 
 		res.setJsonPayload(<@untainted> payload);
 		
